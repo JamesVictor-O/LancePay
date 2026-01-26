@@ -35,6 +35,7 @@ model User {
   apiKeys          ApiKey[]
   brandingSettings BrandingSettings?
   webhooks         UserWebhook[]
+  auditEvents      AuditEvent[]
 }
 
 model Wallet {
@@ -85,6 +86,7 @@ model Invoice {
   escrowEvents     EscrowEvent[]
   lienActive       Boolean           @default(false)
   advances         PaymentAdvance[]
+  auditEvents      AuditEvent[]
 }
 
 model PaymentReminder {
@@ -173,7 +175,7 @@ model ApiKey {
 model AutoSwapRule {
   id            String   @id @default(uuid())
   userId        String   @unique
-  percentage    Int // e.g., 70 (for 70%)
+  percentage    Int
   bankAccountId String
   isActive      Boolean  @default(true)
   createdAt     DateTime @default(now())
@@ -186,7 +188,7 @@ model AutoSwapRule {
 model BulkInvoiceJob {
   id           String    @id @default(uuid())
   userId       String
-  status       String    @default("processing") // processing, completed, failed
+  status       String    @default("processing")
   totalCount   Int
   successCount Int       @default(0)
   failedCount  Int       @default(0)
@@ -220,7 +222,7 @@ model Dispute {
 model DisputeMessage {
   id          String   @id @default(uuid())
   disputeId   String
-  senderType  String // 'freelancer', 'client', 'admin'
+  senderType  String
   senderEmail String
   message     String
   attachments Json     @default("[]")
@@ -234,8 +236,8 @@ model DisputeMessage {
 model EscrowEvent {
   id         String   @id @default(uuid())
   invoiceId  String
-  eventType  String // e.g., 'created', 'funded', 'released', 'disputed'
-  actorType  String // 'freelancer', 'client', 'admin', 'system'
+  eventType  String
+  actorType  String
   actorEmail String
   notes      String?
   metadata   Json?    @default("{}")
@@ -300,5 +302,21 @@ model PaymentAdvance {
 
   @@index([userId])
   @@index([invoiceId])
-  @@index([status])
+}
+
+model AuditEvent {
+  id        String   @id @default(uuid())
+  invoiceId String
+  eventType String   @db.VarChar(50)
+  actorId   String?
+  metadata  Json?
+  signature String
+  createdAt DateTime @default(now())
+
+  invoice Invoice @relation(fields: [invoiceId], references: [id], onDelete: Cascade)
+  actor   User?   @relation(fields: [actorId], references: [id])
+
+  @@index([invoiceId])
+  @@index([eventType])
+  @@index([createdAt])
 }
