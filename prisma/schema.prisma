@@ -84,10 +84,33 @@ model Invoice {
   transaction      Transaction?
   paymentReminders PaymentReminder[]
   dispute          Dispute?
-  escrowEvents     EscrowEvent[]
-  lienActive       Boolean           @default(false)
-  advances         PaymentAdvance[]
+  escrowEnabled           Boolean           @default(false)
+  escrowStatus            String            @default("none") // none, pending, funded, released, disputed
+  escrowReleaseConditions String?
+  escrowReleasedAt        DateTime?
+  escrowDisputedAt        DateTime?
+  escrowEvents            EscrowEvent[]
+  lienActive              Boolean           @default(false)
+  advances                PaymentAdvance[]
   auditEvents      AuditEvent[]
+  messages                InvoiceMessage[]
+}
+
+model InvoiceMessage {
+  id            String   @id @default(uuid())
+  invoiceId     String
+  senderId      String?  // null for guest clients
+  senderType    String   // 'freelancer', 'client'
+  senderName    String
+  content       String   @db.Text
+  attachmentUrl String?  @db.VarChar(512)
+  isInternal    Boolean  @default(false) // if true, only freelancer sees
+  createdAt     DateTime @default(now())
+
+  invoice Invoice @relation(fields: [invoiceId], references: [id], onDelete: Cascade)
+
+  @@index([invoiceId])
+  @@index([createdAt])
 }
 
 model PaymentReminder {
