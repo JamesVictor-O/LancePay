@@ -89,6 +89,11 @@ model Invoice {
   escrowEvents            EscrowEvent[]
   lienActive              Boolean           @default(false)
   advances                PaymentAdvance[]
+
+  // Confidential invoice fields (Zero-Knowledge encryption)
+  isConfidential     Boolean  @default(false)
+  encryptedPayload   String?  @db.Text // AES-256-GCM encrypted JSON blob
+  decryptionSalt     String?  // Salt used in key derivation (not the key itself)
 }
 
 model PaymentReminder {
